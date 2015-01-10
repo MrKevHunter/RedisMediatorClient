@@ -22,6 +22,7 @@ namespace RedisMediator.ConsoleApp
 
             var openGenericRequestHandler = typeof (IRequestHandler<,>);
             var mediatorPipeline = typeof(MediatorPipeline<,>);
+            var cachingHandler = typeof(CachingHandler<,>);
             kernel.Bind(
                 x =>
                 {
@@ -29,12 +30,15 @@ namespace RedisMediator.ConsoleApp
                         .SelectAllClasses()
                         .InheritedFrom(openGenericRequestHandler)
                         .BindAllInterfaces()
-                        .Configure(syntax => syntax.WhenInjectedInto(mediatorPipeline));
+                        .Configure(syntax => syntax.WhenInjectedInto(cachingHandler));
                 });
 
 
-            kernel.Bind(openGenericRequestHandler).To(mediatorPipeline);
+            kernel.Bind(openGenericRequestHandler).To(cachingHandler).WhenInjectedInto(mediatorPipeline);
 
+            kernel.Bind(openGenericRequestHandler).To(mediatorPipeline);
+            
+            
             
             kernel.Bind(
                 x =>
