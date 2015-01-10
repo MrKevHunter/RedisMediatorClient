@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using CommonServiceLocator.NinjectAdapter.Unofficial;
 using MediatR;
 using Microsoft.Practices.ServiceLocation;
 using Ninject;
-using Ninject.Activation;
 using Ninject.Extensions.Conventions;
+using Ninject.Planning.Bindings;
 using Ninject.Planning.Bindings.Resolvers;
 using RedisMediatorClient;
 
@@ -19,16 +20,35 @@ namespace RedisMediator.ConsoleApp
             kernel.Components.Add<IBindingResolver, ContravariantBindingResolver>();
             kernel.Bind(scan => scan.FromAssemblyContaining<IMediator>().SelectAllClasses().BindDefaultInterface());
 
-
+            var openGenericRequestHandler = typeof (IRequestHandler<,>);
+            var mediatorPipeline = typeof(MediatorPipeline<,>);
             kernel.Bind(
-                        x =>
-                            x.FromAssemblyContaining<ExpensiveRequest>()
-                                .SelectAllClasses()
-                                .InheritedFrom(typeof(IRequestHandler<,>)).BindAllInterfaces().Configure(syntax => syntax.WhenInjectedInto(typeof(MediatorPipeline<,>))
+                x =>
+                {
+                    x.FromAssemblyContaining<ExpensiveRequest>()
+                        .SelectAllClasses()
+                        .InheritedFrom(openGenericRequestHandler)
+                        .BindAllInterfaces()
+                        .Configure(syntax => syntax.WhenInjectedInto(mediatorPipeline));
+                });
 
-                        ));
 
-            kernel.Bind(typeof (IRequestHandler<,>)).To(typeof (MediatorPipeline<,>));
+            kernel.Bind(openGenericRequestHandler).To(mediatorPipeline);
+
+            
+            kernel.Bind(
+                x =>
+                    x.FromAssemblyContaining<ExpensiveRequest>()
+                        .SelectAllClasses()
+                        .InheritedFrom(typeof (IPreRequestHandler<>)).BindAllInterfaces()
+                );
+            kernel.Bind(
+                x =>
+                    x.FromAssemblyContaining<ExpensiveRequest>()
+                        .SelectAllClasses()
+                        .InheritedFrom(typeof (IPostRequestHandler<,>)).BindAllInterfaces()
+                );
+
 
             kernel.Bind<TextWriter>().ToConstant(Console.Out);
 
@@ -36,55 +56,9 @@ namespace RedisMediator.ConsoleApp
             var serviceLocatorProvider = new ServiceLocatorProvider(() => serviceLocator);
             kernel.Bind<ServiceLocatorProvider>().ToConstant(serviceLocatorProvider);
 
-
             var mediator = serviceLocator.GetInstance<IMediator>();
 
             return mediator;
-        }
-
-        private static void Action(IContext context, object o)
-        {
-            new MediatorPipeline<ExpensiveRequest, ExpensiveRequestResponse>(
-                (IRequestHandler<ExpensiveRequest, ExpensiveRequestResponse>) o, null, null);
-        }
-
-        /* 
-            var openListType = typeof (MediatorPipeline<,>);
-            var requestType = context.Request.Service.GenericTypeArguments[0];
-            var responseType = context.Request.Service.GenericTypeArguments[1];
-
-            var preRequestType = typeof (IPreRequestHandler<>).MakeGenericType(requestType);
-            var postRequestType = typeof (IPostRequestHandler<,>).MakeGenericType(requestType, responseType);
-
-            try
-            {
-
-                var preRequests = context.Kernel.GetAll(preRequestType);
-
-                var postRequests = context.Kernel.GetAll(postRequestType);
-
-                var preRequestArrayInstance = Array.CreateInstance(preRequestType,preRequests.Count());
-
-                var postRequestArrayInstance = Array.CreateInstance(postRequestType,postRequests.Count());
-                for (int i = 0; i < preRequests.Count(); i++)
-                {
-                    dynamic arr = preRequestArrayInstance;
-                    dynamic elementAt = preRequests.ElementAt(i);
-                    arr[i] = elementAt;
-                }
-
-                var genericListType = openListType.MakeGenericType(requestType, responseType);
-                Activator.CreateInstance(genericListType, o, preRequestArrayInstance, postRequestArrayInstance);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        }*/
-
-        public static dynamic ChangeTheType(dynamic source, Type dest)
-        {
-            return Convert.ChangeType(source, dest);
         }
     }
 }
