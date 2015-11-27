@@ -13,7 +13,7 @@ namespace RedisMediator.ConsoleApp
     {
         static void Main(string[] args)
         {
-
+//
             IMediator mediator;
             if (1 == 2)
             {
