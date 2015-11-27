@@ -9,6 +9,7 @@ namespace RedisMediatorClient
         public string GenerateKey()
         {
             return "b";
+            
         }
     }
 
