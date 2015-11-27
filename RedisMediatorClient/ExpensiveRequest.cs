@@ -23,6 +23,7 @@ namespace RedisMediatorClient
         public ExpensiveRequestResponse Handle(ExpensiveRequest message)
         {
             Thread.Sleep(5000);
+            // Added some text
             return new ExpensiveRequestResponse();
         }
     }
