@@ -4,7 +4,7 @@ using System;
 using System.Diagnostics;
 using MediatR;
 using RedisMediatorClient;
-
+//
 namespace RedisMediator.ConsoleApp
 {
 
@@ -13,7 +13,7 @@ namespace RedisMediator.ConsoleApp
     {
         static void Main(string[] args)
         {
-
+//
             IMediator mediator;
             if (1 == 2)
             {

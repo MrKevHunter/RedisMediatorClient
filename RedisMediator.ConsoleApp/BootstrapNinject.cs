@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.Practices.ServiceLocation;
 using Ninject;
 using Ninject.Extensions.Conventions;
+
 using Ninject.Planning.Bindings;
 using Ninject.Planning.Bindings.Resolvers;
 using RedisMediatorClient;
