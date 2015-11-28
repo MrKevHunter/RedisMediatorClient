@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using MediatR;
-
 namespace RedisMediatorClient
 {
     public class ExpensiveRequest :IRequest<ExpensiveRequestResponse>,IRedisCachable
